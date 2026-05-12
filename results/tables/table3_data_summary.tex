@@ -1,0 +1,18 @@
+\begin{table}[t]
+\centering
+\caption{Dataset statistics after preprocessing and leakage removal.}
+\label{tab:data_summary}
+\begin{tabular}{l rrrrrr}
+\toprule
+Split & Total & Positive & Negative & Drug Classes & Avg Length (bp) & Source \\
+\midrule
+Train & 10,015 & 4,415 & 5,600 & 131 & 1333 & refseq \\
+Dev & 1,431 & 631 & 800 & 62 & 1337 & card \\
+Test-CARD & 2,862 & 1,262 & 1,600 & 83 & 1318 & refseq \\
+Test-MEGARes & 6,124 & 4,524 & 1,600 & 1 & 1220 & megares \\
+Test-SARG & 8,915 & 7,315 & 1,600 & 1 & 398 & sarg \\
+\bottomrule
+\end{tabular}
+\vspace{2mm}
+\footnotesize{Sequences with $>$90\% k-mer overlap to training data were removed from external test sets.}
+\end{table}

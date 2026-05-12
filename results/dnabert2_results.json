@@ -1,0 +1,100 @@
+{
+  "DNABERT-2": {
+    "test_card_full": {
+      "F1": 0.954,
+      "MCC": 0.9194,
+      "Precision": 0.9326,
+      "Recall": 0.9765,
+      "ms_per_seq": 730.3,
+      "AUROC": 0.9843
+    },
+    "test_card_150bp": {
+      "F1": 0.5111,
+      "MCC": 0.4935,
+      "Precision": 0.9583,
+      "Recall": 0.3485,
+      "ms_per_seq": 110.8,
+      "AUROC": 0.927
+    },
+    "test_card_300bp": {
+      "F1": 0.844,
+      "MCC": 0.7941,
+      "Precision": 0.9388,
+      "Recall": 0.7667,
+      "ms_per_seq": 131.8,
+      "AUROC": 0.9477
+    },
+    "test_card_500bp": {
+      "F1": 0.9159,
+      "MCC": 0.8859,
+      "Precision": 0.8909,
+      "Recall": 0.9423,
+      "ms_per_seq": 157.7,
+      "AUROC": 0.9717
+    },
+    "test_megares_full": {
+      "F1": 0.99,
+      "MCC": 0.9605,
+      "Precision": 1.0,
+      "Recall": 0.9803,
+      "ms_per_seq": 298.6,
+      "AUROC": 0.9984
+    },
+    "test_megares_150bp": {
+      "F1": 0.4048,
+      "MCC": 0.3176,
+      "Precision": 1.0,
+      "Recall": 0.2537,
+      "ms_per_seq": 111.7,
+      "AUROC": 0.8744
+    },
+    "test_megares_300bp": {
+      "F1": 0.861,
+      "MCC": 0.709,
+      "Precision": 0.96,
+      "Recall": 0.7805,
+      "ms_per_seq": 129.9,
+      "AUROC": 0.9567
+    },
+    "test_megares_500bp": {
+      "F1": 0.9524,
+      "MCC": 0.8747,
+      "Precision": 0.9836,
+      "Recall": 0.9231,
+      "ms_per_seq": 158.2,
+      "AUROC": 0.977
+    },
+    "test_sarg_full": {
+      "F1": 0.0,
+      "MCC": -0.1279,
+      "Precision": 0.0,
+      "Recall": 0.0,
+      "ms_per_seq": 200.1,
+      "AUROC": 0.9787
+    },
+    "test_sarg_150bp": {
+      "F1": 0.0,
+      "MCC": -0.0304,
+      "Precision": 0.0,
+      "Recall": 0.0,
+      "ms_per_seq": 113.5,
+      "AUROC": 0.9592
+    },
+    "test_sarg_300bp": {
+      "F1": 0.0,
+      "MCC": -0.0958,
+      "Precision": 0.0,
+      "Recall": 0.0,
+      "ms_per_seq": 130.4,
+      "AUROC": 0.9621
+    },
+    "test_sarg_500bp": {
+      "F1": 0.0,
+      "MCC": -0.1961,
+      "Precision": 0.0,
+      "Recall": 0.0,
+      "ms_per_seq": 143.8,
+      "AUROC": 0.911
+    }
+  }
+}

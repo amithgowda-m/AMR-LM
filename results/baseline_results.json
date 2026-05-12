@@ -1,0 +1,222 @@
+{
+  "RGI": {
+    "test_card_full": {
+      "F1": 0.845,
+      "MCC": 0.795,
+      "AUROC": 0.925,
+      "Precision": 0.865,
+      "Recall": 0.815,
+      "ms_per_seq": 47.8,
+      "note": "placeholder - tool not available"
+    },
+    "test_megares_full": {
+      "F1": 0.709,
+      "MCC": 0.659,
+      "AUROC": 0.789,
+      "Precision": 0.729,
+      "Recall": 0.679,
+      "ms_per_seq": 31.9,
+      "note": "placeholder - tool not available"
+    },
+    "test_sarg_full": {
+      "F1": 0.636,
+      "MCC": 0.586,
+      "AUROC": 0.716,
+      "Precision": 0.656,
+      "Recall": 0.606,
+      "ms_per_seq": 12.0,
+      "note": "placeholder - tool not available"
+    },
+    "test_card_150bp": {
+      "F1": 0.582,
+      "MCC": 0.532,
+      "AUROC": 0.662,
+      "Precision": 0.602,
+      "Recall": 0.552,
+      "ms_per_seq": 44.0,
+      "note": "placeholder - tool not available"
+    },
+    "test_megares_150bp": {
+      "F1": 0.454,
+      "MCC": 0.404,
+      "AUROC": 0.534,
+      "Precision": 0.474,
+      "Recall": 0.424,
+      "ms_per_seq": 36.9,
+      "note": "placeholder - tool not available"
+    },
+    "test_sarg_150bp": {
+      "F1": 0.381,
+      "MCC": 0.331,
+      "AUROC": 0.461,
+      "Precision": 0.401,
+      "Recall": 0.351,
+      "ms_per_seq": 48.6,
+      "note": "placeholder - tool not available"
+    },
+    "test_card_300bp": {
+      "F1": 0.713,
+      "MCC": 0.663,
+      "AUROC": 0.793,
+      "Precision": 0.733,
+      "Recall": 0.683,
+      "ms_per_seq": 14.6,
+      "note": "placeholder - tool not available"
+    },
+    "test_megares_300bp": {
+      "F1": 0.537,
+      "MCC": 0.487,
+      "AUROC": 0.617,
+      "Precision": 0.557,
+      "Recall": 0.507,
+      "ms_per_seq": 13.3,
+      "note": "placeholder - tool not available"
+    },
+    "test_sarg_300bp": {
+      "F1": 0.492,
+      "MCC": 0.442,
+      "AUROC": 0.572,
+      "Precision": 0.512,
+      "Recall": 0.462,
+      "ms_per_seq": 28.6,
+      "note": "placeholder - tool not available"
+    },
+    "test_card_500bp": {
+      "F1": 0.767,
+      "MCC": 0.717,
+      "AUROC": 0.847,
+      "Precision": 0.787,
+      "Recall": 0.737,
+      "ms_per_seq": 18.1,
+      "note": "placeholder - tool not available"
+    },
+    "test_megares_500bp": {
+      "F1": 0.624,
+      "MCC": 0.574,
+      "AUROC": 0.704,
+      "Precision": 0.644,
+      "Recall": 0.594,
+      "ms_per_seq": 11.3,
+      "note": "placeholder - tool not available"
+    },
+    "test_sarg_500bp": {
+      "F1": 0.562,
+      "MCC": 0.512,
+      "AUROC": 0.642,
+      "Precision": 0.582,
+      "Recall": 0.532,
+      "ms_per_seq": 21.5,
+      "note": "placeholder - tool not available"
+    }
+  },
+  "DeepARG": {
+    "test_card_full": {
+      "F1": 0.778,
+      "MCC": 0.728,
+      "AUROC": 0.858,
+      "Precision": 0.798,
+      "Recall": 0.748,
+      "ms_per_seq": 40.3,
+      "note": "placeholder - tool not available"
+    },
+    "test_megares_full": {
+      "F1": 0.618,
+      "MCC": 0.568,
+      "AUROC": 0.698,
+      "Precision": 0.638,
+      "Recall": 0.588,
+      "ms_per_seq": 28.1,
+      "note": "placeholder - tool not available"
+    },
+    "test_sarg_full": {
+      "F1": 0.584,
+      "MCC": 0.534,
+      "AUROC": 0.664,
+      "Precision": 0.604,
+      "Recall": 0.554,
+      "ms_per_seq": 7.1,
+      "note": "placeholder - tool not available"
+    },
+    "test_card_150bp": {
+      "F1": 0.534,
+      "MCC": 0.484,
+      "AUROC": 0.614,
+      "Precision": 0.554,
+      "Recall": 0.504,
+      "ms_per_seq": 12.7,
+      "note": "placeholder - tool not available"
+    },
+    "test_megares_150bp": {
+      "F1": 0.363,
+      "MCC": 0.313,
+      "AUROC": 0.443,
+      "Precision": 0.383,
+      "Recall": 0.333,
+      "ms_per_seq": 47.7,
+      "note": "placeholder - tool not available"
+    },
+    "test_sarg_150bp": {
+      "F1": 0.349,
+      "MCC": 0.299,
+      "AUROC": 0.429,
+      "Precision": 0.369,
+      "Recall": 0.319,
+      "ms_per_seq": 41.4,
+      "note": "placeholder - tool not available"
+    },
+    "test_card_300bp": {
+      "F1": 0.622,
+      "MCC": 0.572,
+      "AUROC": 0.702,
+      "Precision": 0.642,
+      "Recall": 0.592,
+      "ms_per_seq": 9.4,
+      "note": "placeholder - tool not available"
+    },
+    "test_megares_300bp": {
+      "F1": 0.487,
+      "MCC": 0.437,
+      "AUROC": 0.567,
+      "Precision": 0.507,
+      "Recall": 0.457,
+      "ms_per_seq": 24.8,
+      "note": "placeholder - tool not available"
+    },
+    "test_sarg_300bp": {
+      "F1": 0.415,
+      "MCC": 0.365,
+      "AUROC": 0.495,
+      "Precision": 0.435,
+      "Recall": 0.385,
+      "ms_per_seq": 27.3,
+      "note": "placeholder - tool not available"
+    },
+    "test_card_500bp": {
+      "F1": 0.681,
+      "MCC": 0.631,
+      "AUROC": 0.761,
+      "Precision": 0.701,
+      "Recall": 0.651,
+      "ms_per_seq": 45.9,
+      "note": "placeholder - tool not available"
+    },
+    "test_megares_500bp": {
+      "F1": 0.54,
+      "MCC": 0.49,
+      "AUROC": 0.62,
+      "Precision": 0.56,
+      "Recall": 0.51,
+      "ms_per_seq": 34.8,
+      "note": "placeholder - tool not available"
+    },
+    "test_sarg_500bp": {
+      "F1": 0.492,
+      "MCC": 0.442,
+      "AUROC": 0.572,
+      "Precision": 0.512,
+      "Recall": 0.462,
+      "ms_per_seq": 28.4,
+      "note": "placeholder - tool not available"
+    }
+  }
+}

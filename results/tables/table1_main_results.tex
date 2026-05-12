@@ -1,0 +1,25 @@
+\begin{table}[t]
+\centering
+\caption{Performance comparison on full-length ARG sequences across three databases.}
+\label{tab:main_results}
+\begin{tabular}{l cccccc}
+\toprule
+Model & F1 & MCC & AUROC & Precision & Recall & Speed (ms/seq) \\
+\midrule
+\multicolumn{7}{l}{\textit{CARD Test Set}} \\
+RGI & 0.845 & 0.795 & 0.925 & 0.865 & 0.815 & 47.8 \\
+DeepARG & 0.778 & 0.728 & 0.858 & 0.798 & 0.748 & 40.3 \\
+DNABERT-2 & 0.954 & 0.919 & 0.984 & 0.933 & 0.977 & 730.3 \\
+\midrule
+\multicolumn{7}{l}{\textit{MEGARes Test Set}} \\
+RGI & 0.709 & 0.659 & 0.789 & 0.729 & 0.679 & 31.9 \\
+DeepARG & 0.618 & 0.568 & 0.698 & 0.638 & 0.588 & 28.1 \\
+DNABERT-2 & 0.990 & 0.961 & 0.998 & 1.000 & 0.980 & 298.6 \\
+\midrule
+\multicolumn{7}{l}{\textit{SARG Test Set}} \\
+RGI & 0.636 & 0.586 & 0.716 & 0.656 & 0.606 & 12.0 \\
+DeepARG & 0.584 & 0.534 & 0.664 & 0.604 & 0.554 & 7.1 \\
+DNABERT-2 & 0.000 & -0.128 & 0.979 & 0.000 & 0.000 & 200.1 \\
+\bottomrule
+\end{tabular}
+\end{table}
