@@ -99,25 +99,23 @@ class AMRDataset(Dataset):
       - Truncation at MAX_LENGTH for very long genes
     """
 
-    def __init__(self, csv_path: str, tokenizer, max_length: int = MAX_LENGTH,
-                 max_samples: int = None):
-        self.df = pd.read_csv(csv_path)
-        if max_samples and max_samples < len(self.df):
-            self.df = self.df.sample(n=max_samples, random_state=SEED).reset_index(drop=True)
-        self.sequences  = self.df["sequence"].tolist()
-        self.labels     = self.df["label"].tolist()
-        self.tokenizer  = tokenizer
-        self.max_length = max_length
+    def __init__(self, df, tokenizer, is_train=False):
+        self.seqs = df["sequence"].tolist()
+        self.labels = df["label"].tolist()
+        self.tokenizer = tokenizer
+        self.is_train = is_train
 
     def __len__(self):
-        return len(self.sequences)
+        return len(self.seqs)
 
     def __getitem__(self, idx):
-        seq = str(self.sequences[idx])
+        seq = str(self.seqs[idx])
+        label = self.labels[idx]
+
         # BPE tokenization: returns input_ids + attention_mask
         enc = self.tokenizer(
             seq,
-            max_length=self.max_length,
+            max_length=MAX_LENGTH,
             padding="max_length",
             truncation=True,
             return_tensors="pt",
@@ -125,7 +123,7 @@ class AMRDataset(Dataset):
         return {
             "input_ids":      enc["input_ids"].squeeze(0),       # (MAX_LENGTH,)
             "attention_mask": enc["attention_mask"].squeeze(0),   # (MAX_LENGTH,)
-            "labels":         torch.tensor(self.labels[idx], dtype=torch.long),
+            "labels":         torch.tensor(label, dtype=torch.long),
         }
 
 
@@ -202,11 +200,11 @@ class AMRTrainer:
       6. LR scheduler step  (linear warmup → linear decay)
     """
 
-    def __init__(self, model, train_ds, val_ds, training_args: dict,
+    def __init__(self, model, train_df, val_df, tokenizer, training_args: dict,
                  pos_weight: float, device: torch.device):
         self.model      = model.to(device)
-        self.train_ds   = train_ds
-        self.val_ds     = val_ds
+        self.train_ds   = AMRDataset(train_df, tokenizer, is_train=True)
+        self.val_ds     = AMRDataset(val_df, tokenizer, is_train=False)
         self.args       = training_args
         self.pos_weight = pos_weight
         self.device     = device
@@ -288,30 +286,36 @@ class AMRTrainer:
                 mask  = batch["attention_mask"].to(self.device)
                 labels = batch["labels"].to(self.device)
 
-                optimizer.zero_grad()
+                if n_batches % self.args["gradient_accumulation_steps"] == 0:
+                    optimizer.zero_grad()
 
                 # ── Forward pass (STEP 2 + 3) ──────────────────────────────
                 if use_amp:
                     with torch.amp.autocast("cuda"):
                         out  = self.model(input_ids=ids, attention_mask=mask)
                         loss = loss_fn(out.logits, labels)
+                        loss = loss / self.args["gradient_accumulation_steps"]
                     scaler.scale(loss).backward()
-                    scaler.unscale_(optimizer)
-                    nn.utils.clip_grad_norm_(
-                        self.model.parameters(), self.args["max_grad_norm"])
-                    scaler.step(optimizer)
-                    scaler.update()
+                    if (n_batches + 1) % self.args["gradient_accumulation_steps"] == 0:
+                        scaler.unscale_(optimizer)
+                        nn.utils.clip_grad_norm_(
+                            self.model.parameters(), self.args["max_grad_norm"])
+                        scaler.step(optimizer)
+                        scaler.update()
+                        scheduler.step()
                 else:
                     out  = self.model(input_ids=ids, attention_mask=mask)
                     loss = loss_fn(out.logits, labels)
                     # ── Backward pass (STEP 4) ──────────────────────────────
+                    loss = loss / self.args["gradient_accumulation_steps"]
                     loss.backward()
-                    nn.utils.clip_grad_norm_(
-                        self.model.parameters(), self.args["max_grad_norm"])
-                    optimizer.step()
+                    if (n_batches + 1) % self.args["gradient_accumulation_steps"] == 0:
+                        nn.utils.clip_grad_norm_(
+                            self.model.parameters(), self.args["max_grad_norm"])
+                        optimizer.step()
+                        scheduler.step()
 
-                scheduler.step()
-                total_loss += loss.item()
+                total_loss += loss.item() * self.args["gradient_accumulation_steps"]
                 n_batches  += 1
 
             avg_train_loss = total_loss / max(n_batches, 1)
@@ -332,6 +336,10 @@ class AMRTrainer:
                 f"AUROC={val_metrics['auroc']:.4f} | "
                 f"Time={elapsed_min:.1f}min"
             )
+
+            # Free VRAM after validation before the next epoch starts
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
             # Save best checkpoint
             if val_metrics["f1"] > self.best_f1:
@@ -436,12 +444,11 @@ def main():
     parser = argparse.ArgumentParser(description="Fine-tune DNABERT-2 for AMR detection")
     parser.add_argument("--use_lora",    action="store_true",
                         help="STEP 5: Apply LoRA (60%% VRAM reduction)")
-    parser.add_argument("--epochs",      type=int,   default=3,
-                        help="Training epochs (default: 3)")
-    parser.add_argument("--batch_size",  type=int,   default=8,
-                        help="Training batch size")
-    parser.add_argument("--lr",          type=float, default=2e-5,
-                        help="AdamW learning rate (default: 2e-5, slow to preserve pre-training)")
+    parser.add_argument('--epochs', type=int, default=5, help='Number of training epochs (default 5)')
+    parser.add_argument('--batch_size', type=int, default=8, help='Training batch size (default 8)')
+    parser.add_argument('--gradient_accumulation_steps', type=int, default=1, help='Grad accumulation (default 1)')
+    parser.add_argument('--lr', type=float, default=2e-5, help='Learning rate (default 2e-5)')
+    parser.add_argument('--weight_decay', type=float, default=0.05, help='Weight decay (default 0.05)')
     parser.add_argument("--resume",      action="store_true",
                         help="Resume from best checkpoint")
     parser.add_argument("--max_samples", type=int,   default=None,
@@ -505,10 +512,13 @@ def main():
                     "Use --use_lora on consumer GPUs.")
 
     # ── Build datasets (BPE tokenization happens in __getitem__) ───────────
-    max_val = (args.max_samples // 4) if args.max_samples else None
-    train_ds = AMRDataset(str(train_csv), tokenizer, MAX_LENGTH, args.max_samples)
-    val_ds   = AMRDataset(str(dev_csv),   tokenizer, MAX_LENGTH, max_val)
-    logger.info(f"[Data] Train={len(train_ds)} | Val={len(val_ds)}")
+    dev_df = pd.read_csv(dev_csv)
+    if args.max_samples:
+        train_df = train_df.sample(n=min(len(train_df), args.max_samples), random_state=SEED).reset_index(drop=True)
+        max_val = args.max_samples // 4
+        dev_df = dev_df.sample(n=min(len(dev_df), max_val), random_state=SEED).reset_index(drop=True)
+
+    logger.info(f"[Data] Train={len(train_df)} | Val={len(dev_df)}")
 
     # Save tokenizer alongside model checkpoints
     for d in ["dnabert2_amr_best", "dnabert2_amr_final"]:
@@ -521,6 +531,7 @@ def main():
         "epochs":        args.epochs,
         "lr":            args.lr,         # 2e-5 default (slow, preserve pre-training)
         "batch_size":    args.batch_size,
+        "gradient_accumulation_steps": args.gradient_accumulation_steps,
         "eval_batch_size": 16,
         "warmup_ratio":  0.10,            # 10% warm-up steps
         "weight_decay":  0.01,            # AdamW regularisation
@@ -537,7 +548,7 @@ def main():
 
     # ── Train ───────────────────────────────────────────────────────────────
     trainer = AMRTrainer(
-        model=model, train_ds=train_ds, val_ds=val_ds,
+        model=model, train_df=train_df, val_df=dev_df, tokenizer=tokenizer,
         training_args=training_args,
         pos_weight=pos_weight, device=device,
     )

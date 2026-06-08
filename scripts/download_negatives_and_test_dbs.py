@@ -293,14 +293,15 @@ def fetch_negatives_entrez(logger, target_count=12000):
     records = []
     
     datasets = {
-        "E_coli": ("genome", "http://ftp.ensemblgenomes.org/pub/bacteria/release-57/fasta/bacteria_0_collection/escherichia_coli_str_k_12_substr_mg1655_gca_000005845/dna/Escherichia_coli_str_k_12_substr_mg1655_gca_000005845.ASM584v2.dna.chromosome.Chromosome.fa.gz"),
-        "B_subtilis": ("genome", "http://ftp.ensemblgenomes.org/pub/bacteria/release-57/fasta/bacteria_0_collection/bacillus_subtilis_subsp_subtilis_str_168_gca_000009045/dna/Bacillus_subtilis_subsp_subtilis_str_168_gca_000009045.AL0091263.dna.chromosome.Chromosome.fa.gz"),
+        "E_coli": ("transcript", "http://ftp.ensemblgenomes.org/pub/bacteria/release-57/fasta/bacteria_0_collection/escherichia_coli_str_k_12_substr_mg1655_gca_000005845/cds/Escherichia_coli_str_k_12_substr_mg1655_gca_000005845.ASM584v2.cds.all.fa.gz"),
+        "B_subtilis": ("transcript", "http://ftp.ensemblgenomes.org/pub/bacteria/release-57/fasta/bacteria_0_collection/bacillus_subtilis_subsp_subtilis_str_168_gca_000009045/cds/Bacillus_subtilis_subsp_subtilis_str_168_gca_000009045.AL0091263.cds.all.fa.gz"),
         "Homo_sapiens": ("transcript", "http://ftp.ensembl.org/pub/release-110/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh38.cdna.all.fa.gz"),
         "Mus_musculus": ("transcript", "http://ftp.ensembl.org/pub/release-110/fasta/mus_musculus/cdna/Mus_musculus.GRCm39.cdna.all.fa.gz"),
         "S_cerevisiae": ("transcript", "http://ftp.ensembl.org/pub/release-110/fasta/saccharomyces_cerevisiae/cdna/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz")
     }
 
-    seqs_per_dataset = 2500
+    seqs_per_genome = 10000
+    all_negatives = []
 
     for org, (dtype, url) in datasets.items():
         gz_path = os.path.join(NEGATIVES_DIR, f"{org}.fa.gz")
@@ -319,13 +320,13 @@ def fetch_negatives_entrez(logger, target_count=12000):
             with gzip.open(gz_path, "rt") as f:
                 if dtype == "genome":
                     genome = "".join([line.strip() for line in f if not line.startswith(">")])
-                    for i in range(seqs_per_dataset * 2): # Try to get enough
+                    for i in range(seqs_per_genome * 2): # Try to get enough
                         length = random.randint(300, 3000)
                         start = random.randint(0, len(genome) - length - 1)
                         seq = genome[start:start+length].upper()
                         if set(seq).issubset({"A", "C", "G", "T"}):
                             org_records.append((f">neg|{org}|genome_frag|seq_{i}", seq))
-                            if len(org_records) >= seqs_per_dataset:
+                            if len(org_records) >= seqs_per_genome:
                                 break
                 else:
                     header = None
@@ -343,7 +344,7 @@ def fetch_negatives_entrez(logger, target_count=12000):
                             seq.append(line)
             
             random.shuffle(org_records)
-            records.extend(org_records[:seqs_per_dataset])
+            records.extend(org_records[:seqs_per_genome])
         except Exception as e:
             logger.error(f"  Failed to process {org}: {e}")
 

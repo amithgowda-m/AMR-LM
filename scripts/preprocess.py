@@ -152,8 +152,9 @@ def balance_dataset(pos_df, neg_df):
     logger.info("Step 3: Balancing dataset...")
     n_pos, n_neg = len(pos_df), len(neg_df)
     logger.info(f"  Before: {n_pos} positives, {n_neg} negatives")
-    if n_neg > n_pos * 2:
-        neg_df = neg_df.sample(n=n_pos, random_state=42).reset_index(drop=True)
+    # Balance dataset (Cap negatives to 2x positives to make epochs fast)
+    if n_neg > n_pos * 2.0:
+        neg_df = neg_df.sample(n=int(n_pos * 2.0), random_state=42).reset_index(drop=True)
     elif n_neg < n_pos // 2:
         needed = n_pos - n_neg
         extra = neg_df.sample(n=needed, replace=True, random_state=42).reset_index(drop=True)
