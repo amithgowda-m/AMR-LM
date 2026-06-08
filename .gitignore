@@ -40,6 +40,8 @@ desktop.ini
 data/raw/
 data/processed/
 data/splits/
+history.db
+card-data.tar.bz2
 
 # ── Model Weights (too large for GitHub; ~468 MB each) ──────
 models/

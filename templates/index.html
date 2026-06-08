@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMR-LM | Antimicrobial Resistance Gene Detection</title>
+    <meta name="description" content="Detect antimicrobial resistance genes in DNA sequences using the fine-tuned DNABERT-2 language model.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside id="history-sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h2>History</h2>
+                <button id="close-sidebar-btn" class="icon-btn" title="Close Sidebar">✕</button>
+            </div>
+            <div class="sidebar-content">
+                <div id="history-list" class="history-list">
+                    <!-- History items injected here -->
+                    <div class="history-empty">No previous analyses found.</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="container">
+            <header>
+                <div class="header-content">
+                    <div class="logo">
+                        <span class="icon">🧬</span>
+                        <h1>AMR-LM</h1>
+                    </div>
+                    <button id="toggle-sidebar-btn" class="btn secondary-btn sidebar-toggle">
+                        <span class="icon">🕒</span> History
+                    </button>
+                </div>
+                <p class="subtitle">Cross-Database Generalization of DNA Language Models</p>
+            </header>
+
+            <main class="glass-panel">
+                <div class="input-section">
+                    <h2>Analyze DNA Sequence</h2>
+                    <p class="instruction">Enter a raw nucleotide sequence below to detect if it contains Antimicrobial Resistance (AMR) genes.</p>
+                    
+                    <form id="prediction-form">
+                        <div class="textarea-wrapper">
+                            <textarea id="dna-sequence" name="sequence" placeholder="e.g., ATGCGTACGTTAGC..." spellcheck="false" required></textarea>
+                            <div class="sequence-stats">
+                                <span id="char-count">0</span> bp
+                            </div>
+                        </div>
+                        
+                        <div class="actions">
+                            <button type="button" id="load-sample-btn" class="btn secondary-btn">Load Sample</button>
+                            <button type="submit" id="analyze-btn" class="btn primary-btn">
+                                <span class="btn-text">Analyze Sequence</span>
+                                <div class="loader hidden"></div>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Result Section -->
+                <div id="result-section" class="result-section hidden">
+                    <div class="result-card">
+                        <div class="result-header">
+                            <h3 id="prediction-title">Analysis Complete</h3>
+                            <div id="prediction-badge" class="badge">--</div>
+                        </div>
+                        
+                        <div class="confidence-container">
+                            <div class="confidence-label">
+                                <span>Confidence Score</span>
+                                <span id="confidence-value">--%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div id="confidence-fill" class="progress-fill"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">AMR Probability</span>
+                                <span id="prob-amr" class="detail-value">--</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Non-AMR Probability</span>
+                                <span id="prob-non-amr" class="detail-value">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Error Banner -->
+                <div id="error-banner" class="error-banner hidden">
+                    <span class="error-icon">⚠️</span>
+                    <span id="error-message">An error occurred during prediction.</span>
+                </div>
+            </main>
+            
+            <footer>
+                <p>Powered by <strong>DNABERT-2</strong> • Fine-tuned on CARD database</p>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
