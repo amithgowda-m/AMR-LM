@@ -273,10 +273,14 @@ def download_sarg(logger):
 # ==============================================
 # PART C: Negative Sequences (RefSeq)
 # ==============================================
-def fetch_negatives_entrez(logger, target_count=8000):
-    """Fetch negative sequences from NCBI using Biopython Entrez."""
+def fetch_negatives_entrez(logger, target_count=12000):
+    """Download actual eukaryotic and bacterial sequences from Ensembl FTP."""
+    import urllib.request
+    import gzip
+    import random
+
     logger.info("=" * 60)
-    logger.info("PART C: Fetching Negative Sequences from NCBI RefSeq")
+    logger.info("PART C: Fetching Real Eukaryotic & Bacterial Negative Sequences")
     logger.info("=" * 60)
     os.makedirs(NEGATIVES_DIR, exist_ok=True)
 
@@ -287,154 +291,68 @@ def fetch_negatives_entrez(logger, target_count=8000):
         return True
 
     records = []
+    
+    datasets = {
+        "E_coli": ("genome", "http://ftp.ensemblgenomes.org/pub/bacteria/release-57/fasta/bacteria_0_collection/escherichia_coli_str_k_12_substr_mg1655_gca_000005845/dna/Escherichia_coli_str_k_12_substr_mg1655_gca_000005845.ASM584v2.dna.chromosome.Chromosome.fa.gz"),
+        "B_subtilis": ("genome", "http://ftp.ensemblgenomes.org/pub/bacteria/release-57/fasta/bacteria_0_collection/bacillus_subtilis_subsp_subtilis_str_168_gca_000009045/dna/Bacillus_subtilis_subsp_subtilis_str_168_gca_000009045.AL0091263.dna.chromosome.Chromosome.fa.gz"),
+        "Homo_sapiens": ("transcript", "http://ftp.ensembl.org/pub/release-110/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh38.cdna.all.fa.gz"),
+        "Mus_musculus": ("transcript", "http://ftp.ensembl.org/pub/release-110/fasta/mus_musculus/cdna/Mus_musculus.GRCm39.cdna.all.fa.gz"),
+        "S_cerevisiae": ("transcript", "http://ftp.ensembl.org/pub/release-110/fasta/saccharomyces_cerevisiae/cdna/Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz")
+    }
 
-    # Try Biopython Entrez first
-    try:
-        from Bio import Entrez, SeqIO
-        Entrez.email = "amr_pipeline@research.edu"
+    seqs_per_dataset = 2500
 
-        # Housekeeping genes to search for
-        housekeeping_genes = [
-            "dnaA", "gyrB", "recA", "rpoB", "atpD", "mdh", "purA", "trpB",
-            "groEL", "infB", "rpoA", "fusA", "gapA", "pgi", "pfkA", "eno",
-        ]
+    for org, (dtype, url) in datasets.items():
+        gz_path = os.path.join(NEGATIVES_DIR, f"{org}.fa.gz")
+        if not os.path.exists(gz_path) or os.path.getsize(gz_path) < 1000000:
+            logger.info(f"  Downloading {org} {dtype} from Ensembl using curl...")
+            import subprocess
+            try:
+                subprocess.run(["curl.exe", "-L", "-o", gz_path, url], check=True)
+            except Exception as e:
+                logger.error(f"  Failed to download {org} with curl: {e}")
+                continue
 
-        # Non-pathogenic organisms
-        organisms = [
-            "Escherichia coli K-12",
-            "Bacillus subtilis",
-            "Pseudomonas putida",
-            "Corynebacterium glutamicum",
-            "Lactobacillus rhamnosus",
-            "Synechocystis sp. PCC 6803",
-        ]
-
-        logger.info(f"  Fetching housekeeping genes from {len(organisms)} organisms...")
-        seqs_per_query = max(50, target_count // (len(housekeeping_genes) * len(organisms)))
-
-        for org in organisms:
-            for gene in housekeeping_genes:
-                if len(records) >= target_count:
-                    break
-                try:
-                    query = f'"{org}"[Organism] AND {gene}[Gene] AND 100:5000[SLEN]'
-                    handle = Entrez.esearch(db="nucleotide", term=query, retmax=seqs_per_query)
-                    result = Entrez.read(handle)
-                    handle.close()
-
-                    ids = result.get("IdList", [])
-                    if not ids:
-                        continue
-
-                    # Fetch in batches
-                    batch_size = min(50, len(ids))
-                    for batch_start in range(0, len(ids), batch_size):
-                        batch_ids = ids[batch_start : batch_start + batch_size]
-                        try:
-                            fetch_handle = Entrez.efetch(
-                                db="nucleotide",
-                                id=",".join(batch_ids),
-                                rettype="fasta",
-                                retmode="text",
-                            )
-                            fasta_text = fetch_handle.read()
-                            fetch_handle.close()
-                            # Parse FASTA manually to avoid Biopython comment issues
-                            current_header = None
-                            current_seq = []
-                            for fline in fasta_text.split("\n"):
-                                fline = fline.strip()
-                                if not fline or fline.startswith(";") or fline.startswith("#") or fline.startswith("!"):
-                                    continue
-                                if fline.startswith(">"):
-                                    if current_header and current_seq:
-                                        seq = "".join(current_seq).upper()
-                                        if 100 <= len(seq) <= 5000 and set(seq).issubset({"A", "T", "C", "G", "N"}):
-                                            rec_id = current_header.split()[0].lstrip(">")
-                                            header = f">neg|{org.replace(' ', '_')}|{gene}|{rec_id}"
-                                            records.append((header, seq))
-                                    current_header = fline
-                                    current_seq = []
-                                elif current_header:
-                                    current_seq.append(fline)
-                            # Don't forget the last record
-                            if current_header and current_seq:
-                                seq = "".join(current_seq).upper()
-                                if 100 <= len(seq) <= 5000 and set(seq).issubset({"A", "T", "C", "G", "N"}):
-                                    rec_id = current_header.split()[0].lstrip(">")
-                                    header = f">neg|{org.replace(' ', '_')}|{gene}|{rec_id}"
-                                    records.append((header, seq))
-                            time.sleep(0.4)  # NCBI rate limit
-                        except Exception as e:
-                            logger.warning(f"    Fetch error for {gene}/{org}: {e}")
-                            time.sleep(1)
-
-                except Exception as e:
-                    logger.warning(f"    Search error for {gene}/{org}: {e}")
-                    time.sleep(1)
-
-            if len(records) >= target_count:
-                break
-
-        logger.info(f"  Fetched {len(records)} sequences from NCBI Entrez")
-
-    except ImportError:
-        logger.warning("  Biopython not available for Entrez. Using synthetic negatives.")
-    except Exception as e:
-        logger.warning(f"  Entrez fetch failed: {e}. Using synthetic negatives.")
-
-    # If we don't have enough, generate synthetic non-AMR sequences
-    if len(records) < target_count:
-        needed = target_count - len(records)
-        logger.info(f"  Generating {needed} additional synthetic negative sequences...")
-        records.extend(_generate_synthetic_negatives(needed))
+        logger.info(f"  Extracting sequences from {org}...")
+        try:
+            org_records = []
+            with gzip.open(gz_path, "rt") as f:
+                if dtype == "genome":
+                    genome = "".join([line.strip() for line in f if not line.startswith(">")])
+                    for i in range(seqs_per_dataset * 2): # Try to get enough
+                        length = random.randint(300, 3000)
+                        start = random.randint(0, len(genome) - length - 1)
+                        seq = genome[start:start+length].upper()
+                        if set(seq).issubset({"A", "C", "G", "T"}):
+                            org_records.append((f">neg|{org}|genome_frag|seq_{i}", seq))
+                            if len(org_records) >= seqs_per_dataset:
+                                break
+                else:
+                    header = None
+                    seq = []
+                    for line in f:
+                        line = line.strip()
+                        if line.startswith(">"):
+                            if header and seq:
+                                s = "".join(seq).upper()
+                                if 200 <= len(s) <= 4000 and set(s).issubset({"A", "C", "G", "T"}):
+                                    org_records.append((f">neg|{org}|transcript|{header}", s))
+                            header = line[1:].split()[0]
+                            seq = []
+                        else:
+                            seq.append(line)
+            
+            random.shuffle(org_records)
+            records.extend(org_records[:seqs_per_dataset])
+        except Exception as e:
+            logger.error(f"  Failed to process {org}: {e}")
 
     # Write all negatives
+    random.shuffle(records)
     write_fasta(records, dest)
-    logger.info(f"  Total negative sequences: {len(records)}")
+    logger.info(f"  Total negative sequences extracted: {len(records)}")
     logger.info(f"  Saved to: {dest}")
     return True
-
-
-def _generate_synthetic_negatives(n):
-    """Generate synthetic non-AMR DNA sequences (random housekeeping gene-like sequences)."""
-    records = []
-    # Use realistic GC content ranges for different organisms
-    gc_contents = [0.40, 0.45, 0.50, 0.55, 0.60, 0.65]
-
-    housekeeping = [
-        "dnaA", "gyrB", "recA", "rpoB", "atpD", "mdh", "purA", "trpB",
-        "groEL", "infB", "rpoA", "fusA", "gapA", "pgi", "pfkA", "eno",
-        "tpiA", "aceE", "aceF", "lpd", "icd", "sucA", "sucB", "sdhA",
-    ]
-
-    organisms = [
-        "E_coli_K12", "B_subtilis", "P_putida", "C_glutamicum",
-        "L_rhamnosus", "S_cerevisiae", "T_thermophilus", "D_radiodurans",
-    ]
-
-    for i in range(n):
-        gc = random.choice(gc_contents)
-        seq_len = random.randint(200, 3000)
-
-        # Generate sequence with specified GC content
-        gc_count = int(seq_len * gc)
-        at_count = seq_len - gc_count
-        bases = (
-            ["G"] * (gc_count // 2)
-            + ["C"] * (gc_count - gc_count // 2)
-            + ["A"] * (at_count // 2)
-            + ["T"] * (at_count - at_count // 2)
-        )
-        random.shuffle(bases)
-        seq = "".join(bases)
-
-        gene = random.choice(housekeeping)
-        org = random.choice(organisms)
-        header = f">neg_synthetic|{org}|{gene}|seq_{i}"
-        records.append((header, seq))
-
-    return records
 
 
 def print_summary(logger):

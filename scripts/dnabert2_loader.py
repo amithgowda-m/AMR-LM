@@ -209,6 +209,25 @@ def load_dnabert2_classifier(
     if weights_path and os.path.isfile(weights_path):
         logger.info(f"[Loader] Restoring fine-tuned weights from: {weights_path}")
         state_dict = torch.load(weights_path, map_location="cpu")
+        
+        # Check if LoRA was used during training
+        is_lora = any("lora_" in k or "base_model" in k for k in state_dict.keys())
+        if is_lora:
+            logger.info("[Loader] Detected LoRA weights in checkpoint. Applying PEFT wrapper...")
+            try:
+                from peft import LoraConfig, get_peft_model, TaskType
+                lora_cfg = LoraConfig(
+                    task_type=TaskType.FEATURE_EXTRACTION,
+                    r=16,
+                    lora_alpha=32,
+                    target_modules=["Wqkv"],
+                    lora_dropout=0.1,
+                    bias="none",
+                )
+                model.bert = get_peft_model(model.bert, lora_cfg)
+            except ImportError:
+                logger.error("[Loader] Checkpoint uses LoRA but 'peft' library is not installed.")
+                
         missing, unexpected = model.load_state_dict(state_dict, strict=False)
         if missing:
             logger.warning(f"[Loader] Missing keys in checkpoint: {missing}")
